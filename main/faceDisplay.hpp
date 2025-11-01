@@ -16,4 +16,7 @@ void lookRightSequence();
 void lookLeftSequence();
 void lookBothDirSequence();
 
+// Emotions
+void displayHappyEmo();
+
 #endif

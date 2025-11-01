@@ -72,6 +72,7 @@ void loop() {
   else
   {
     Serial.println("No motion.");
+    displayHappyEmo();
     checkIdleAndSleep();
   }
 

@@ -106,3 +106,56 @@ void lookBothDirSequence() {
     Serial.println("Motion BOTH DIRECTION detected!");
 }
 
+/*/////////////////////////////////////////////////////////////////////////////////////////////////////////
+// --- HAPPY EMOTION ---
+/////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+void displayHappyEmo() {
+    display.clearDisplay();
+
+    // --- Shifted upper center ---
+    int leftEyeX = 38;
+    int rightEyeX = 88;
+    int eyeY = 20;  // moved eyes up
+    int eyeWidth = 16;
+
+    // Left eye curve (thicker by drawing multiple lines)
+    for (int i = 0; i < 4; i++) {  // thickness: 4 pixels
+        display.drawLine(leftEyeX - 7, eyeY + i, leftEyeX - 3, eyeY - 2 + i, SH110X_WHITE);
+        display.drawLine(leftEyeX - 3, eyeY - 2 + i, leftEyeX + 3, eyeY - 2 + i, SH110X_WHITE);
+        display.drawLine(leftEyeX + 3, eyeY - 2 + i, leftEyeX + 7, eyeY + i, SH110X_WHITE);
+    }
+
+    // Right eye curve
+    for (int i = 0; i < 4; i++) {
+        display.drawLine(rightEyeX - 7, eyeY + i, rightEyeX - 3, eyeY - 2 + i, SH110X_WHITE);
+        display.drawLine(rightEyeX - 3, eyeY - 2 + i, rightEyeX + 3, eyeY - 2 + i, SH110X_WHITE);
+        display.drawLine(rightEyeX + 3, eyeY - 2 + i, rightEyeX + 7, eyeY + i, SH110X_WHITE);
+    }
+
+    // --- Happy Mouth (thicker curved smile) ---
+    int mouthWidth = 40;
+    int mouthY = 42;  // moved mouth up
+    int mouthX = (128 - mouthWidth) / 2;
+
+    for (int i = 0; i < 4; i++) {  // thickness: 4 pixels
+        display.drawLine(mouthX, mouthY + i, mouthX + 10, mouthY + 6 + i, SH110X_WHITE);
+        display.drawLine(mouthX + 10, mouthY + 6 + i, mouthX + 30, mouthY + 6 + i, SH110X_WHITE);
+        display.drawLine(mouthX + 30, mouthY + 6 + i, mouthX + 40, mouthY + i, SH110X_WHITE);
+    }
+
+    display.display();
+
+    Serial.println("HAPPY YARN!");
+    delay(4000);
+}
+
+
+
+
+
+
+
+
+
+
+
