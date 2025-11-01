@@ -9,6 +9,6 @@
 void checkIdleAndSleep();
 void resetIdleTimer();
 void enterDeepSleep();
-void wakeUpAnimation();
+void enterWakeUpState();
 
 #endif

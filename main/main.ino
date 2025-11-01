@@ -17,19 +17,9 @@ void setup() {
   Serial.begin(115200);
   Wire.begin(21, 22); // SDA = 21, SCL = 22 for ESP32
 
-  // Detect wakeup reason
-  esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
-  if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT1) {
-    Serial.println("Woke up from motion!");
-    // Reset idle timer after waking up
-    resetIdleTimer();
-    
-  } else {
-    Serial.println("Normal power-on boot");
-  }
-
   // Initialize display
-  if (!display.begin(SCREEN_ADDRESS, true)) {
+  if (!display.begin(SCREEN_ADDRESS, true))
+  {
     Serial.println(F("Display allocation failed"));
     for (;;);
   }
@@ -37,6 +27,23 @@ void setup() {
   display.clearDisplay();
   display.display();
   delay(500);
+
+  // Detect wakeup reason
+  esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
+  if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT1)
+  {
+    Serial.println("Woke up from motion!");
+    // Reset idle timer after waking up
+    resetIdleTimer();
+    // Wake up animation
+    enterWakeUpState();
+    
+  }
+  else
+  {
+    Serial.println("Normal power-on boot");
+    // Wake up animation
+  }
 
   // Initialize motion sensors
   initMotionRightSensor(MOTION_PIN_RIGHT);

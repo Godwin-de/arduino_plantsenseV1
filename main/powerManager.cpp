@@ -44,31 +44,31 @@ void enterDeepSleep()
     Serial.println("Starting sleep animation...");
 
     // --- Eye-closing animation ---
-    for (int h = 20; h >= 2; h -= 3) {
+    for (int h = 20; h >= 2; h -= 3)
+    {
         lookCenter(h, 4);  // gradually close eyes
         delay(100);
     }
 
-    for (int h = 2; h <= 20; h += 2) {
+    for (int h = 2; h <= 20; h += 2)
+    {
         lookCenter(h, 2);  // small blink before full sleep
         delay(60);
     }
 
-    for (int h = 20; h >= 0; h -= 4) {
+    for (int h = 20; h >= 0; h -= 4)
+    {
         lookCenter(h, 1);  // fully closed
         delay(80);
     }
 
-    // Final sleeping face text
+    // Clear and power down the display
     display.clearDisplay();
-    display.setTextSize(1);
-    display.setTextColor(SH110X_WHITE);
-    display.setCursor(45, 25);
-    display.print("Z z z...");
     display.display();
-    delay(500);
+    display.oled_command(SH110X_DISPLAYOFF); // Turn off the display
+    delay(100);
 
-    Serial.println("Display off. Going to deep sleep...");
+    Serial.println("Display powered down. Going to deep sleep...");
 
     // Configure wake-up source (any motion sensor HIGH wakes up)
     esp_sleep_enable_ext1_wakeup(
@@ -78,4 +78,53 @@ void enterDeepSleep()
 
     // Enter deep sleep
     esp_deep_sleep_start();
+}
+
+/*/////////////////////////////////////////////////////////////////////////////////////////////////////////
+// --- Enter wake-up state ---
+/////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+void enterWakeUpState()
+{
+    Serial.println("Waking up animation...");
+
+    int eyeClosed = 2;       // eyes fully closed
+    int eyeOpen = 20;        // eyes fully open
+    int mouthMin = 4;
+    int mouthMax = 20;
+
+    // --- Yawning while eyes closed ---
+    for (int i = 0; i < 2; i++)
+    { // repeat yawn twice
+        // Mouth opening
+        for (int h = mouthMin; h <= mouthMax; h += 2) {
+            drawVectorFace(eyeClosed, h, 0);
+            delay(100);
+        }
+        // Mouth closing
+        for (int h = mouthMax; h >= mouthMin; h -= 2) {
+            drawVectorFace(eyeClosed, h, 0);
+            delay(80);
+        }
+    }
+
+    // Ensure eyes stay closed after yawn
+    drawVectorFace(eyeClosed, mouthMin, 0);
+    delay(200);
+
+    // --- Slowly open eyes ---
+    for (int h = eyeClosed; h <= eyeOpen; h += 1)
+    { // gradual opening
+        drawVectorFace(h, mouthMin, 0);
+        delay(80);
+    }
+
+    // Optional: tiny blink before fully awake
+    drawVectorFace(eyeOpen, mouthMin, 0);
+    delay(150);
+    drawVectorFace(eyeOpen - 5, mouthMin, 0);
+    delay(100);
+    drawVectorFace(eyeOpen, mouthMin, 0);
+    delay(150);
+
+    Serial.println("Wake-up animation complete!");
 }
