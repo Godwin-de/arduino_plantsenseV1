@@ -1,3 +1,4 @@
+#include <WiFi.h>
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH110X.h>
@@ -10,12 +11,14 @@
 #include "affirmationMessages.hpp"
 #include "engagementIndicator.hpp"
 #include "backupSystemAccess.hpp"
+#include "quotes.hpp"
 
 
 #define SCREEN_WIDTH 128
 #define SCREEN_HEIGHT 64
 #define OLED_RESET -1
 #define SCREEN_ADDRESS 0x3C
+#define API_RETRY_LIMIT 10
 
 // Global display object
 Adafruit_SH1106G display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
@@ -26,6 +29,9 @@ Adafruit_SH1106G display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 // Global variables for soil moisture tracking
 int oldSoilMoisturePercent = 0;
 int newSoilMoisturePercent = 0;
+
+// For API usage
+int apiRetryCount = 0;
 
 
 void setup() {
@@ -43,6 +49,18 @@ void setup() {
   display.clearDisplay();
   display.display();
   delay(500);
+
+  ///////////////////////////////////////
+  // Preparing to connect on live API for affirmation messages  
+  WiFi.begin(ssid, password);
+  while ((WiFi.status() != WL_CONNECTED) && (apiRetryCount <= API_RETRY_LIMIT)) {
+    // Connecting attempt
+    displayWifiLoadingAnimation(3, 150);  
+    apiRetryCount++;
+  }
+ 
+  bool isConnected = (WiFi.status() == WL_CONNECTED);
+  displayWifiConnectionStatus(isConnected); // connection result display
 
   ///////////////////////////////////////
   // Detect wakeup reason
@@ -134,7 +152,23 @@ void loop() {
     Serial.println("Current Streak Indicator: " + String(currentStreakPoints));
 
     // Display affirmation message
-    String affirmationMsg = getAffirmationMessage();
+    String affirmationMsg = "";
+    bool isConnected = (WiFi.status() == WL_CONNECTED); 
+
+    if( isConnected ) {
+      // Try fetching quote from API
+      affirmationMsg = fetchAndDisplayQuote(true);
+
+      if (affirmationMsg == notConnectedMsg) {
+        // If API call failed, fallback to local messages
+        affirmationMsg = getAffirmationMessage();
+      }
+    }
+    else {
+      affirmationMsg = getAffirmationMessage();
+    }
+  
+    // Display the affirmation message (from API or local)
     displayAffirmationMessage(affirmationMsg.c_str());
     
     // reset idle timer on watering activity

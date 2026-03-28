@@ -334,31 +334,131 @@ void displayAffirmationMessage(const char* message) {
     ////////////////////////////////////////////////////////
     // SEQ3: Show affirmation text ---
     display.clearDisplay();
-    display.setTextSize(1);
+
+    displayWrappedText(message); // scroll message across the screen
+
+    display.display();
+    delay(10000);
+}
+
+/*/////////////////////////////////////////////////////////////////////////////////////////////////////////
+// --- DISPLAY WIFI LOADING ANIMATION ---
+/////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+void displayWifiLoadingAnimation(int cycles, int delayMs) {
+    const char* baseMsg = "Connecting WiFi";
+
+    for (int i = 1; i <= cycles; i++) {
+        // Clear screen
+        display.clearDisplay();
+        display.setTextSize(1.5);
+        display.setTextColor(SH110X_WHITE);
+
+        // Build message with dots
+        String msg = String(baseMsg);
+        int dots = i % 4; // cycle through 0,1,2,3 dots
+        for (int j = 0; j < dots; j++) {
+            msg += ".";
+        }
+
+        displayCenteredText(msg.c_str());
+        display.println(msg);
+        display.display();
+
+        delay(delayMs);
+    }
+}
+
+/*/////////////////////////////////////////////////////////////////////////////////////////////////////////
+// --- DISPLAY AFFIRMATION MESSAGE WITH WATER REACTION FACE ---
+/////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+void displayWifiConnectionStatus(bool isConnected) {
+    display.clearDisplay();
+    display.setTextSize(1.5);
     display.setTextColor(SH110X_WHITE);
 
-    int16_t x, y;
-    uint16_t w, h;
-    display.getTextBounds(message, 0, 0, &x, &y, &w, &h);
-    int centerX = (display.width() - w) / 2 - x;
-    int centerY = 30;
+    const char* msg;
+    if (isConnected) {
+        msg = "WiFi connected!";
+        Serial.println("WiFi connected!");
+    } else {
+        msg = "WiFi failed. No API.";
+        Serial.println("WiFi connection failed. Proceeding without API.");
+    }
 
-    display.setCursor(centerX, centerY);
-    display.print(message);
+    displayCenteredText(msg);
+    display.print(msg);
 
     display.display();
     delay(5000);
 }
 
+/*/////////////////////////////////////////////////////////////////////////////////////////////////////////
+// --- DISPLAY CENTERED TEXT ---
+/////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+void displayCenteredText(const char* text, int cursorY) {
+    // Measure text bounds
+    int16_t x, y;
+    uint16_t w, h;
+    display.getTextBounds(text, 0, 0, &x, &y, &w, &h);
 
+    // Center horizontally and vertically
+    int centerX = (display.width() - w) / 2 - x;
+    if (cursorY == -1) {
+        cursorY = (display.height() - h) / 2 - y; // vertical center if not specified
+    }
 
+    display.setCursor(centerX, cursorY);
+}
 
+/*/////////////////////////////////////////////////////////////////////////////////////////////////////////
+// --- DISPLAY WRAPPED TEXT (NO WORD CUTTING) ---
+/////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+void displayWrappedText(const char* text) {
+    String msg(text);
+    int16_t x, y;
+    uint16_t w, h;
 
+    int cursorY = 0;
+    int start = 0;
+    String line = "";
 
+    // Measure line height using a sample character
+    display.getTextBounds("A", 0, 0, &x, &y, &w, &h);
+    int lineHeight = h + 2;
 
+    // Adjust usable width (leave a margin of 4 pixels on each side)
+    int usableWidth = display.width() - 8;
 
+    while (start < msg.length()) {
+        int spaceIndex = msg.indexOf(' ', start);
+        if (spaceIndex == -1) spaceIndex = msg.length();
+        String word = msg.substring(start, spaceIndex);
 
+        // Test if adding this word fits
+        String testLine = line.length() > 0 ? line + " " + word : word;
+        display.getTextBounds(testLine.c_str(), 0, 0, &x, &y, &w, &h);
 
+        if (w > usableWidth) {
+            // Print current line
+            display.setCursor(0, cursorY);
+            display.print(line);
+
+            // Move to next line
+            cursorY += lineHeight;
+            line = word;
+        } else {
+            line = testLine;
+        }
+
+        start = spaceIndex + 1;
+    }
+
+    // Print the last line
+    if (line.length() > 0) {
+        display.setCursor(0, cursorY);
+        display.print(line);
+    }
+}
 
 
 

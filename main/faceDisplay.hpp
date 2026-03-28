@@ -23,12 +23,17 @@ void displaySadEmo();
 
 // Text display
 void displayAffirmationMessage(const char* message);
+void displayWifiLoadingAnimation(int cycles, int delayMs);
+void displayWifiConnectionStatus(bool isConnected);
 
 // Checker
 void showEmotion(int soilMoisturePercent);
 
 // Others
 int getCurrentEmotion();
+void displayCenteredText(const char* text, int cursorY = -1);
+void displayWrappedText(const char* text);
+
 
 // variables
 enum EmotionState {
