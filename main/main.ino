@@ -2,11 +2,14 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH110X.h>
 // #include <RTClib.h>
+
 #include "faceDisplay.hpp"
 #include "motionSensor.hpp"
 #include "powerManager.hpp"
 #include "soilSensor.hpp"
-// #include "timelyReminders.hpp"
+#include "affirmationMessages.hpp"
+#include "engagementIndicator.hpp"
+#include "backupSystemAccess.hpp"
 
 
 #define SCREEN_WIDTH 128
@@ -14,15 +17,22 @@
 #define OLED_RESET -1
 #define SCREEN_ADDRESS 0x3C
 
-// Global display object (used in emotions.cpp)
+// Global display object
 Adafruit_SH1106G display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
 
+// Global datetime object
 // RTC_DS3231 rtc;
+
+// Global variables for soil moisture tracking
+int oldSoilMoisturePercent = 0;
+int newSoilMoisturePercent = 0;
+
 
 void setup() {
   Serial.begin(115200);
   Wire.begin(21, 22); // SDA = 21, SCL = 22 for ESP32
 
+  ///////////////////////////////////////
   // Initialize display
   if (!display.begin(SCREEN_ADDRESS, true))
   {
@@ -34,29 +44,41 @@ void setup() {
   display.display();
   delay(500);
 
+  ///////////////////////////////////////
   // Detect wakeup reason
   esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
   if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT1)
   {
     Serial.println("Woke up from motion!");
-    // Reset idle timer after waking up
-    resetIdleTimer();
     // Wake up animation
     enterWakeUpState();
+    resetIdleTimer();
     
   }
   else
   {
     Serial.println("Normal power-on boot");
     // Wake up animation
+    enterWakeUpState();
+    resetIdleTimer();
   }
 
-  // Initialize motion sensors
+  ///////////////////////////////////////
+  // Read moisture sensor once at startup
   initSoilSensor();
+  newSoilMoisturePercent = getSoilMoisturePercent();
+  oldSoilMoisturePercent = newSoilMoisturePercent;
+
+  ///////////////////////////////////////
+  // Initialize motion sensors
   initMotionRightSensor(MOTION_PIN_RIGHT);
   initMotionLeftSensor(MOTION_PIN_LEFT);
-  resetIdleTimer();
 
+  ///////////////////////////////////////
+  // Initialize persistent backup data
+  loadStreakData();
+
+  ///////////////////////////////////////
   // Initialize RTC for time-based features
   // if (!rtc.begin())
   // {
@@ -73,32 +95,8 @@ void setup() {
 }
 
 void loop() {
-  lookCenterSequence();
-
-  if (isMotionBothDirDetected())
-  {
-    lookBothDirSequence();
-    resetIdleTimer();
-  }
-  else if (isMotionRightDetected())
-  {
-    lookRightSequence();
-    resetIdleTimer();
-  }
-  else if (isMotionLeftDetected())
-  {
-    lookLeftSequence();
-    resetIdleTimer();
-  }
-  else
-  {
-    Serial.println("No motion.");
-    displayHappyEmo(); //TEMP
-    checkIdleAndSleep(); //TEMP
-  }
-
   // CHECK TIMELY REMINDER
-  // for (int i = 0; i < numAffirmations; i++)
+  // for (int i = 0; i < numTimelyReminders; i++)
   // {
   //   DateTime now = rtc.now();
 
@@ -113,10 +111,76 @@ void loop() {
   //   }
   // }
 
-  // CONTINUOUS MONITORING OF SOIL MOISTURE LEVELS (dito magbabase ng emotion displays)
-  // kada magdidilig, kailangan natin isave yung cuurrent state/emotion to analyze streak
-  printSoilStatus();
-  Serial.println("TEST: " + String(readSoilRaw()));
+  /////////////////////////////////////////////////////// TODO - randomizer of actions to prevent habituation (e.g. different face displays, different wake up animations, etc.)
+  oldSoilMoisturePercent = newSoilMoisturePercent;
+  newSoilMoisturePercent = getSoilMoisturePercent();
+
+  bool isWatered = getWateringStatusFlg(oldSoilMoisturePercent, newSoilMoisturePercent);
+
+  lookCenterSequence();
+
+  // Check if plant is being watered based on soil moisture changes
+  if ( isWatered )
+  {
+    Serial.println("Plant is being watered! 💧");
+
+    // Update engagement streak system
+    int currentEmotion = getCurrentEmotion();
+    updateEngagementStreak(currentEmotion);
+
+    int currentStreakPoints = getCurrentStreakValues();
+    updateUnlockTierLevelStreak(currentStreakPoints);
+
+    Serial.println("Current Streak Indicator: " + String(currentStreakPoints));
+
+    // Display affirmation message
+    String affirmationMsg = getAffirmationMessage();
+    displayAffirmationMessage(affirmationMsg.c_str());
+    
+    // reset idle timer on watering activity
+    resetIdleTimer();
+  }
+
+  if (isMotionBothDirDetected())
+  {
+    // If motion detected in both directions, look center with a blink
+    lookBothDirSequence();
+
+    // Reset idle timer after motion activity
+    resetIdleTimer();
+  }
+  else if (isMotionRightDetected())
+  {
+    // If motion detected on the right, look right
+    lookRightSequence();
+    
+    // Reset idle timer after motion activity
+    resetIdleTimer();
+  }
+  else if (isMotionLeftDetected())
+  {
+    // If motion detected on the left, look left
+    lookLeftSequence();
+
+    // Reset idle timer after motion activity
+    resetIdleTimer();
+  }
+  else
+  {
+    // Determine emotion based on soil moisture percentage and display appropriate emotion
+    showEmotion(newSoilMoisturePercent);
+
+    // Check if idle time has exceeded threshold and enter sleep mode if needed
+    checkIdleAndSleep();
+  }
+
+  newSoilMoisturePercent = 49; //temp for testing purposes
+
+
+
+
+
+  ////////////////////////////////////////////////////////
 
   delay(50);
 }

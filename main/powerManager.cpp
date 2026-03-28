@@ -30,7 +30,6 @@ void checkIdleAndSleep()
 {
     if (!isSleeping && (millis() - lastActivityTime > IDLE_TIMEOUT))
     {
-        Serial.println("⚡ System idle — entering sleep mode...");
         enterDeepSleep();
         isSleeping = true; // mark that sleep sequence started
     }
@@ -41,8 +40,7 @@ void checkIdleAndSleep()
 /////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 void enterDeepSleep()
 {
-    Serial.println("Starting sleep animation...");
-
+    Serial.println("Idle timeout reached. Entering deep sleep...");
     // --- Eye-closing animation ---
     for (int h = 20; h >= 2; h -= 3)
     {
@@ -68,8 +66,6 @@ void enterDeepSleep()
     display.oled_command(SH110X_DISPLAYOFF); // Turn off the display
     delay(100);
 
-    Serial.println("Display powered down. Going to deep sleep...");
-
     // Configure wake-up source (any motion sensor HIGH wakes up)
     esp_sleep_enable_ext1_wakeup(
         (1ULL << MOTION_PIN_RIGHT) | (1ULL << MOTION_PIN_LEFT),
@@ -85,8 +81,7 @@ void enterDeepSleep()
 /////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 void enterWakeUpState()
 {
-    Serial.println("Waking up animation...");
-
+    Serial.println("Waking up from sleep...");
     int eyeClosed = 2;       // eyes fully closed
     int eyeOpen = 20;        // eyes fully open
     int mouthMin = 4;
@@ -125,6 +120,4 @@ void enterWakeUpState()
     delay(100);
     drawVectorFace(eyeOpen, mouthMin, 0);
     delay(150);
-
-    Serial.println("Wake-up animation complete!");
 }

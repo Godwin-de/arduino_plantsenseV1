@@ -18,5 +18,26 @@ void lookBothDirSequence();
 
 // Emotions
 void displayHappyEmo();
+void displayNeutralEmo();
+void displaySadEmo();
+
+// Text display
+void displayAffirmationMessage(const char* message);
+
+// Checker
+void showEmotion(int soilMoisturePercent);
+
+// Others
+int getCurrentEmotion();
+
+// variables
+enum EmotionState {
+  HAPPY,
+  NEUTRAL,
+  SAD
+};
+
+extern int currentEmotion;
+
 
 #endif
