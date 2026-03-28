@@ -157,42 +157,38 @@ void displayHappyEmo() {
 void displayNeutralEmo() {
     display.clearDisplay();
 
-    // --- Shifted upper center ---
-    int leftEyeX = 38;
-    int rightEyeX = 88;
-    int eyeY = 20;  // moved eyes up
+    // --- Eyes ---
+    int eyeOffset = 0;       // adjust if you want shifting
     int eyeWidth = 16;
+    int eyeHeight = 10;      // base height of eyes
+    int leftEyeX = 38 + eyeOffset;
+    int rightEyeX = 88 + eyeOffset;
+    int eyeY = 25;
 
-    // Left eye curve (thicker by drawing multiple lines)
-    for (int i = 0; i < 4; i++) {  // thickness: 4 pixels
-        display.drawLine(leftEyeX - 7, eyeY + i, leftEyeX - 3, eyeY - 2 + i, SH110X_WHITE);
-        display.drawLine(leftEyeX - 3, eyeY - 2 + i, leftEyeX + 3, eyeY - 2 + i, SH110X_WHITE);
-        display.drawLine(leftEyeX + 3, eyeY - 2 + i, leftEyeX + 7, eyeY + i, SH110X_WHITE);
-    }
+    // Draw full rounded eyes
+    display.fillRoundRect(leftEyeX - eyeWidth / 2, eyeY - eyeHeight / 2, eyeWidth, eyeHeight, 4, SH110X_WHITE);
+    display.fillRoundRect(rightEyeX - eyeWidth / 2, eyeY - eyeHeight / 2, eyeWidth, eyeHeight, 4, SH110X_WHITE);
 
-    // Right eye curve
-    for (int i = 0; i < 4; i++) {
-        display.drawLine(rightEyeX - 7, eyeY + i, rightEyeX - 3, eyeY - 2 + i, SH110X_WHITE);
-        display.drawLine(rightEyeX - 3, eyeY - 2 + i, rightEyeX + 3, eyeY - 2 + i, SH110X_WHITE);
-        display.drawLine(rightEyeX + 3, eyeY - 2 + i, rightEyeX + 7, eyeY + i, SH110X_WHITE);
-    }
+    // Cut a portion at the upper side (mask with black rectangle)
+    int cutHeight = 4;  // how much to trim from top
+    display.fillRect(leftEyeX - eyeWidth / 2, eyeY - eyeHeight / 2, eyeWidth, cutHeight, SH110X_BLACK);
+    display.fillRect(rightEyeX - eyeWidth / 2, eyeY - eyeHeight / 2, eyeWidth, cutHeight, SH110X_BLACK);
 
-    // --- Happy Mouth (thicker curved smile) ---
-    int mouthWidth = 40;
-    int mouthY = 42;  // moved mouth up
-    int mouthX = (128 - mouthWidth) / 2;
+    // --- Mouth (shorter frown) ---
+    int mouthHeight = 6;
+    int mouthWidth = 28;   // shorter than happy
+    int mouthY = 50;
+    int mouthX = (128 - mouthWidth) / 2 + (eyeOffset / 2);
 
-    for (int i = 0; i < 4; i++) {  // thickness: 4 pixels
-        display.drawLine(mouthX, mouthY + i, mouthX + 10, mouthY + 6 + i, SH110X_WHITE);
-        display.drawLine(mouthX + 10, mouthY + 6 + i, mouthX + 30, mouthY + 6 + i, SH110X_WHITE);
-        display.drawLine(mouthX + 30, mouthY + 6 + i, mouthX + 40, mouthY + i, SH110X_WHITE);
-    }
+    display.fillRoundRect(mouthX, mouthY - mouthHeight / 2, mouthWidth, mouthHeight, 3, SH110X_WHITE);
 
     display.display();
 
-    Serial.println("NEUTRAL LANG!");
+    Serial.println("NEUTRAL LANG");
     delay(4000);
 }
+
+
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////////////
 // --- SAD EMOTION ---
@@ -200,42 +196,48 @@ void displayNeutralEmo() {
 void displaySadEmo() {
     display.clearDisplay();
 
-    // --- Shifted upper center ---
-    int leftEyeX = 38;
-    int rightEyeX = 88;
-    int eyeY = 20;  // moved eyes up
+    int eyeOffset = 0;
     int eyeWidth = 16;
+    int eyeHeight = 10;
+    int leftEyeX = 38 + eyeOffset;
+    int rightEyeX = 88 + eyeOffset;
+    int eyeY = 25;
 
-    // Left eye curve (thicker by drawing multiple lines)
-    for (int i = 0; i < 4; i++) {  // thickness: 4 pixels
-        display.drawLine(leftEyeX - 7, eyeY + i, leftEyeX - 3, eyeY - 2 + i, SH110X_WHITE);
-        display.drawLine(leftEyeX - 3, eyeY - 2 + i, leftEyeX + 3, eyeY - 2 + i, SH110X_WHITE);
-        display.drawLine(leftEyeX + 3, eyeY - 2 + i, leftEyeX + 7, eyeY + i, SH110X_WHITE);
+    // --- Eyes (base rounded rectangles) ---
+    display.fillRoundRect(leftEyeX - eyeWidth / 2, eyeY - eyeHeight / 2, eyeWidth, eyeHeight, 4, SH110X_WHITE);
+    display.fillRoundRect(rightEyeX - eyeWidth / 2, eyeY - eyeHeight / 2, eyeWidth, eyeHeight, 4, SH110X_WHITE);
+
+    // --- Chip upper inner corners (mirrored diagonal cuts) ---
+    int cutHeight = 4;  // how much to trim
+    for (int i = 0; i < cutHeight; i++) {
+        // Left eye: chip upper inner corner (slant inward)
+        display.drawLine(leftEyeX, eyeY - eyeHeight / 2 - cutHeight + i,
+                         leftEyeX - eyeWidth / 2, eyeY - eyeHeight / 2 + i, SH110X_BLACK);
+
+        // Right eye: chip upper inner corner (mirrored slant inward)
+        display.drawLine(rightEyeX, eyeY - eyeHeight / 2 - cutHeight + i,
+                         rightEyeX + eyeWidth / 2, eyeY - eyeHeight / 2 + i, SH110X_BLACK);
     }
 
-    // Right eye curve
-    for (int i = 0; i < 4; i++) {
-        display.drawLine(rightEyeX - 7, eyeY + i, rightEyeX - 3, eyeY - 2 + i, SH110X_WHITE);
-        display.drawLine(rightEyeX - 3, eyeY - 2 + i, rightEyeX + 3, eyeY - 2 + i, SH110X_WHITE);
-        display.drawLine(rightEyeX + 3, eyeY - 2 + i, rightEyeX + 7, eyeY + i, SH110X_WHITE);
-    }
-
-    // --- Happy Mouth (thicker curved smile) ---
+    // --- Curved Sad Mouth ---
     int mouthWidth = 40;
-    int mouthY = 42;  // moved mouth up
-    int mouthX = (128 - mouthWidth) / 2;
+    int mouthY = 50;
+    int mouthX = (128 - mouthWidth) / 2 + (eyeOffset / 2);
 
-    for (int i = 0; i < 4; i++) {  // thickness: 4 pixels
-        display.drawLine(mouthX, mouthY + i, mouthX + 10, mouthY + 6 + i, SH110X_WHITE);
-        display.drawLine(mouthX + 10, mouthY + 6 + i, mouthX + 30, mouthY + 6 + i, SH110X_WHITE);
-        display.drawLine(mouthX + 30, mouthY + 6 + i, mouthX + 40, mouthY + i, SH110X_WHITE);
+    for (int i = 0; i < 4; i++) {  // thickness
+        display.drawLine(mouthX, mouthY + i, mouthX + 10, mouthY - 6 + i, SH110X_WHITE);
+        display.drawLine(mouthX + 10, mouthY - 6 + i, mouthX + 30, mouthY - 6 + i, SH110X_WHITE);
+        display.drawLine(mouthX + 30, mouthY - 6 + i, mouthX + 40, mouthY + i, SH110X_WHITE);
     }
 
     display.display();
 
-    Serial.println("SAD YARN!");
+    Serial.println("SAD YARN (mirrored chipped eyes + curved mouth)...");
     delay(4000);
 }
+
+
+
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////////////
 // --- DETERMINE EMOTION BASED ON SOIL MOISTURE PERCENTAGE ---

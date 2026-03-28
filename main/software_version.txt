@@ -1,2 +1,14 @@
 TITLE: PlantSense
 Version: 1.4
+
+what's new:
+- added correct neutral emotion display
+- added correct sad emotion display
+
+Pending:
+- Potentiometer integration to adjust soil moisture sensitivity threshhold
+- improve overall sequence (motion sensors should have no delays)
+- CMOS for date time
+- Setting for SSID and password of WIFI
+- correct emotion display when watered while sad/neutral (currently, always happy)
+- unlocked benefits for streak system is still missing

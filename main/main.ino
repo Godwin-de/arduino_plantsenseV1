@@ -208,7 +208,7 @@ void loop() {
     checkIdleAndSleep();
   }
 
-  newSoilMoisturePercent = 49; //temp for testing purposes
+  // newSoilMoisturePercent = 49; //temp for testing purposes
 
 
 
