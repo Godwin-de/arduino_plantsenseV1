@@ -4,6 +4,7 @@
 #include <Adafruit_SH110X.h>
 #include <Wire.h>
 #include <esp_sleep.h>
+#include "backupSystemAccess.hpp"
 
 // Track the last activity time
 static unsigned long lastActivityTime = 0;
@@ -72,6 +73,9 @@ void enterDeepSleep()
         ESP_EXT1_WAKEUP_ANY_HIGH
     );
 
+    // Save current emotion before sleeping
+    SetSaveCurrentEmotion(currentEmotion);
+
     // Enter deep sleep
     esp_deep_sleep_start();
 }
@@ -92,32 +96,32 @@ void enterWakeUpState()
     { // repeat yawn twice
         // Mouth opening
         for (int h = mouthMin; h <= mouthMax; h += 2) {
-            drawVectorFace(eyeClosed, h, 0);
+            drawVectorFace(eyeClosed, h, 0, true);
             delay(100);
         }
         // Mouth closing
         for (int h = mouthMax; h >= mouthMin; h -= 2) {
-            drawVectorFace(eyeClosed, h, 0);
+            drawVectorFace(eyeClosed, h, 0, true);
             delay(80);
         }
     }
 
     // Ensure eyes stay closed after yawn
-    drawVectorFace(eyeClosed, mouthMin, 0);
+    drawVectorFace(eyeClosed, mouthMin, 0, true);
     delay(200);
 
     // --- Slowly open eyes ---
     for (int h = eyeClosed; h <= eyeOpen; h += 1)
     { // gradual opening
-        drawVectorFace(h, mouthMin, 0);
+        drawVectorFace(h, mouthMin, 0, true);
         delay(80);
     }
 
     // Optional: tiny blink before fully awake
-    drawVectorFace(eyeOpen, mouthMin, 0);
+    drawVectorFace(eyeOpen, mouthMin, 0, true);
     delay(150);
-    drawVectorFace(eyeOpen - 5, mouthMin, 0);
+    drawVectorFace(eyeOpen - 5, mouthMin, 0, true);
     delay(100);
-    drawVectorFace(eyeOpen, mouthMin, 0);
+    drawVectorFace(eyeOpen, mouthMin, 0, true);
     delay(150);
 }

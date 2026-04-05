@@ -17,6 +17,12 @@ void saveStreakData() {
     prefs.end();
 }
 
+void SetSaveCurrentEmotion( int emotion) {
+    prefs.begin("PSStreakSystem", false);
+    prefs.putInt("currentEmotion", emotion);
+    prefs.end();
+}
+
 /*/////////////////////////////////////////////////////////////////////////////////////////////////////////
 // --- LOAD PERSISTENT DATA ---
 /////////////////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -25,4 +31,11 @@ void loadStreakData() {
     streakIndicator = prefs.getInt("streakPoints", 0); // load streak points, default 0 if not saved
     streakTierLevel = prefs.getInt("streakTierLevel", 0); // load streak tier level, default 0 if not saved
     prefs.end();
+}
+
+int GetLoadCurrentEmotion() {
+    prefs.begin("PSStreakSystem", false);
+    int emotion = prefs.getInt("currentEmotion", 0); // default to 0 (neutral) if not set
+    prefs.end();
+    return emotion;
 }

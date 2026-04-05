@@ -7,7 +7,7 @@
 // Make the display object in main.ino visible to cpp
 extern Adafruit_SH1106G display;
 
-void drawVectorFace(int eyeHeight, int mouthHeight, int eyeOffset = 0);
+void drawVectorFace(int eyeHeight, int mouthHeight, int eyeOffset = 0, bool isFromSleep = false);
 void lookLeft(int eyeHeight = 20, int mouthHeight = 6);
 void lookRight(int eyeHeight = 20, int mouthHeight = 6);
 void lookCenter(int eyeHeight = 20, int mouthHeight = 6);
@@ -20,6 +20,11 @@ void lookBothDirSequence();
 void displayHappyEmo();
 void displayNeutralEmo();
 void displaySadEmo();
+void displayWhistlingEmo();
+void displayWinkingSequence();
+void displayBreathingCalmSequence();
+void displayLoveEmoteSequence();
+
 
 // Text display
 void displayAffirmationMessage(const char* message);

@@ -24,9 +24,9 @@ int getSoilMoisturePercent() {
     // Map reading to percentage (adjust DRY_VALUE/WET_VALUE for calibration)
     int percent = map(rawValue, DRY_VALUE, WET_VALUE, 0, 100);
     percent = constrain(percent, 0, 100);
-    // return percent;
+    return percent;
 
-    return 50; //temp for testing purposes
+    //return 50; //temp for testing purposes
 }
 
 /**
@@ -47,6 +47,10 @@ void printSoilStatus() {
  * @brief check if system receives water
  */
 bool getWateringStatusFlg(int oldPercent, int newPercent) {
-    // if the new soil moisture percentage is higher than the old one, it means the plant is being watered
-    return (newPercent > oldPercent);
+    // if the new soil moisture percentage is higher than the old one by 6 units, it means the plant is being watered
+    if ((newPercent - oldPercent) >= WATERING_THRESHOLD) {
+        return true;
+    }
+
+    return false;
 }

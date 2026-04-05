@@ -1,12 +1,15 @@
 #include "faceDisplay.hpp"
+#include "backupSystemAccess.hpp"
 
 int currentEmotion = 0;
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////////////
 // --- BASE FACE FUNCTION ---
 /////////////////////////////////////////////////////////////////////////////////////////////////////////*/
-void drawVectorFace(int eyeHeight, int mouthHeight, int eyeOffset) {
+void drawVectorFace(int eyeHeight, int mouthHeight, int eyeOffset, bool isFromSleep ) {
     display.clearDisplay();
+
+    currentEmotion = GetLoadCurrentEmotion(); // Load the saved emotion
 
     // --- Eyes ---
     int leftEyeX = 38 + eyeOffset;
@@ -22,7 +25,26 @@ void drawVectorFace(int eyeHeight, int mouthHeight, int eyeOffset) {
     int mouthWidth = 40;
     int mouthX = (128 - mouthWidth) / 2 + (eyeOffset / 2); // subtle mouth shift
 
-    display.fillRoundRect(mouthX, mouthY - mouthHeight / 2, mouthWidth, mouthHeight, 3, SH110X_WHITE);
+    if(isFromSleep) {
+        display.fillRoundRect(mouthX, mouthY - mouthHeight / 2, mouthWidth, mouthHeight, 3, SH110X_WHITE);
+    } else if(currentEmotion == HAPPY) {
+        // Happy mouth (curved smile)
+        for (int i = 0; i < 4; i++) {
+            display.drawLine(mouthX, mouthY + i, mouthX + 10, mouthY + mouthHeight + i, SH110X_WHITE);
+            display.drawLine(mouthX + 10, mouthY + mouthHeight + i, mouthX + 30, mouthY + mouthHeight + i, SH110X_WHITE);
+            display.drawLine(mouthX + 30, mouthY + mouthHeight + i, mouthX + 40, mouthY + i, SH110X_WHITE);
+        }
+    } else if (currentEmotion == SAD) {
+        // Sad mouth (curved frown)
+        for (int i = 0; i < 4; i++) {
+            display.drawLine(mouthX, mouthY + i, mouthX + 10, mouthY - mouthHeight + i, SH110X_WHITE);
+            display.drawLine(mouthX + 10, mouthY - mouthHeight + i, mouthX + 30, mouthY - mouthHeight + i, SH110X_WHITE);
+            display.drawLine(mouthX + 30, mouthY - mouthHeight + i, mouthX + 40, mouthY + i, SH110X_WHITE);
+        }
+    } else {
+        display.fillRoundRect(mouthX, mouthY - mouthHeight / 2, mouthWidth, mouthHeight, 3, SH110X_WHITE);
+    }
+
     display.display();
 }
 
@@ -188,8 +210,6 @@ void displayNeutralEmo() {
     delay(4000);
 }
 
-
-
 /*/////////////////////////////////////////////////////////////////////////////////////////////////////////
 // --- SAD EMOTION ---
 /////////////////////////////////////////////////////////////////////////////////////////////////////////*/
@@ -236,8 +256,206 @@ void displaySadEmo() {
     delay(4000);
 }
 
+/*/////////////////////////////////////////////////////////////////////////////////////////////////////////
+// --- WHISTLING EMOTION SEQUENCE ---
+/////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+void displayWhistlingEmo() {
+    int mouthX = 64;   // center
+    int mouthY = 48;
+    int mouthRadius = 6;
+
+    for (int frame = 0; frame < 6; frame++) {
+        display.clearDisplay();
+
+        // --- Eyes (slightly squinted) ---
+        int leftEyeX = 38;
+        int rightEyeX = 88;
+        int eyeY = 25;
+        int eyeWidth = 14;
+        int eyeHeight = 6;
+
+        display.fillRoundRect(leftEyeX - eyeWidth / 2, eyeY - eyeHeight / 2,
+                              eyeWidth, eyeHeight, 3, SH110X_WHITE);
+        display.fillRoundRect(rightEyeX - eyeWidth / 2, eyeY - eyeHeight / 2,
+                              eyeWidth, eyeHeight, 3, SH110X_WHITE);
+
+        // --- Mouth (puckered lips) ---
+        // Animate radius slightly to simulate "whistle puff"
+        int animRadius = mouthRadius + (frame % 2 == 0 ? 1 : -1);
+        display.fillCircle(mouthX, mouthY, animRadius, SH110X_WHITE);
+
+        // --- Musical note animation ---
+        int noteX = mouthX + 10 + frame * 3;   // move right each frame
+        int noteY = mouthY - 10 - frame;       // move upward each frame
+        display.drawLine(noteX, noteY, noteX + 4, noteY - 4, SH110X_WHITE);
+        display.drawLine(noteX + 4, noteY - 4, noteX + 6, noteY, SH110X_WHITE);
+
+        display.display();
+        delay(400); // frame delay
+    }
+
+    Serial.println("WHISTLING SEQUENCE PLAYED!");
+}
+
+/*/////////////////////////////////////////////////////////////////////////////////////////////////////////
+// --- WINKING EMOTE SEQUENCE (5 seconds) ---
+/////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+void displayWinkingSequence() {
+    unsigned long startTime = millis();
+    while (millis() - startTime < 5000) {  // run for 5 seconds
+        // --- Frame 1: Normal happy face ---
+        display.clearDisplay();
+        int leftEyeX = 38;
+        int rightEyeX = 88;
+        int eyeY = 25;
+        int eyeWidth = 16;
+        int eyeHeight = 10;
+
+        // Left eye open
+        display.fillRoundRect(leftEyeX - eyeWidth / 2, eyeY - eyeHeight / 2,
+                              eyeWidth, eyeHeight, 4, SH110X_WHITE);
+        // Right eye open
+        display.fillRoundRect(rightEyeX - eyeWidth / 2, eyeY - eyeHeight / 2,
+                              eyeWidth, eyeHeight, 4, SH110X_WHITE);
+
+        // Happy mouth
+        int mouthX = 44;
+        int mouthY = 50;
+        for (int i = 0; i < 3; i++) {
+            display.drawLine(mouthX, mouthY + i, mouthX + 10, mouthY + 6 + i, SH110X_WHITE);
+            display.drawLine(mouthX + 10, mouthY + 6 + i, mouthX + 30, mouthY + 6 + i, SH110X_WHITE);
+            display.drawLine(mouthX + 30, mouthY + 6 + i, mouthX + 40, mouthY + i, SH110X_WHITE);
+        }
+        display.display();
+        delay(400);
+
+        // --- Frame 2: Wink (right eye closed) ---
+        display.clearDisplay();
+        // Left eye open
+        display.fillRoundRect(leftEyeX - eyeWidth / 2, eyeY - eyeHeight / 2,
+                              eyeWidth, eyeHeight, 4, SH110X_WHITE);
+        // Right eye closed (line instead of oval)
+        display.drawLine(rightEyeX - 8, eyeY, rightEyeX + 8, eyeY, SH110X_WHITE);
+
+        // Same happy mouth
+        for (int i = 0; i < 3; i++) {
+            display.drawLine(mouthX, mouthY + i, mouthX + 10, mouthY + 6 + i, SH110X_WHITE);
+            display.drawLine(mouthX + 10, mouthY + 6 + i, mouthX + 30, mouthY + 6 + i, SH110X_WHITE);
+            display.drawLine(mouthX + 30, mouthY + 6 + i, mouthX + 40, mouthY + i, SH110X_WHITE);
+        }
+        display.display();
+        delay(400);
+    }
+
+    Serial.println("WINKING EMOTE SEQUENCE DONE!");
+}
+
+/*/////////////////////////////////////////////////////////////////////////////////////////////////////////
+// --- BREATHING CALM EMOTE SEQUENCE (5 seconds) ---
+/////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+void displayBreathingCalmSequence() {
+    unsigned long startTime = millis();
+    int duration = 5000; // total animation time
+    int cycleTime = 2000; // one inhale + exhale cycle (2 seconds)
+    
+    while (millis() - startTime < duration) {
+        int phase = (millis() - startTime) % cycleTime; // where we are in the cycle
+        float progress = phase / (float)cycleTime;      // 0.0 → 1.0
+
+        // Smooth breathing curve using sine wave
+        float breath = (sin(progress * PI * 2 - PI/2) + 1) / 2; 
+        // breath goes 0 → 1 → 0 smoothly
+
+        display.clearDisplay();
+
+        // --- Eyes (open/close smoothly) ---
+        int leftEyeX = 38;
+        int rightEyeX = 88;
+        int eyeY = 25;
+        int eyeWidth = 16;
+        int eyeHeight = 4 + (int)(breath * 12); // eye height expands/contracts
+
+        display.fillRoundRect(leftEyeX - eyeWidth/2, eyeY - eyeHeight/2,
+                              eyeWidth, eyeHeight, 4, SH110X_WHITE);
+        display.fillRoundRect(rightEyeX - eyeWidth/2, eyeY - eyeHeight/2,
+                              eyeWidth, eyeHeight, 4, SH110X_WHITE);
+
+        // --- Mouth (oval expands/contracts with breath) ---
+        int mouthX = 64;
+        int mouthY = 50;
+        int mouthRadius = 4 + (int)(breath * 4); // mouth grows/shrinks
+
+        display.drawCircle(mouthX, mouthY, mouthRadius, SH110X_WHITE);
+
+        display.display();
+        delay(50); // smooth frame rate
+    }
+
+    Serial.println("CALM BREATHING EMOTE DONE!");
+}
 
 
+/*/////////////////////////////////////////////////////////////////////////////////////////////////////////
+// --- LOVE EMOTE SEQUENCE (Kiss + Heart Eyes, 5 seconds) ---
+/////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+void displayLoveEmoteSequence() {
+    unsigned long startTime = millis();
+    while (millis() - startTime < 5000) {
+        // --- Frame 1: Kiss Emote ---
+        display.clearDisplay();
+
+        // Eyes closed
+        int leftEyeX = 38;
+        int rightEyeX = 88;
+        int eyeY = 25;
+        display.drawLine(leftEyeX - 8, eyeY, leftEyeX + 8, eyeY, SH110X_WHITE);
+        display.drawLine(rightEyeX - 8, eyeY, rightEyeX + 8, eyeY, SH110X_WHITE);
+
+        // Puckered lips
+        int mouthX = 64;
+        int mouthY = 50;
+        display.fillCircle(mouthX, mouthY, 6, SH110X_WHITE);
+
+        // Heart drifting outward
+        int offset = (millis() - startTime) / 400;
+        int heartX = mouthX + 10 + offset * 3;
+        int heartY = mouthY - 10 - offset * 2;
+        display.drawLine(heartX, heartY, heartX + 3, heartY - 3, SH110X_WHITE);
+        display.drawLine(heartX + 3, heartY - 3, heartX + 6, heartY, SH110X_WHITE);
+        display.drawLine(heartX, heartY, heartX + 6, heartY, SH110X_WHITE);
+
+        display.display();
+        delay(400);
+
+        // --- Frame 2: Heart Eyes Emote ---
+        display.clearDisplay();
+
+        // Heart eyes
+        int size = 6;
+        // Left heart
+        display.drawLine(leftEyeX, eyeY, leftEyeX - size, eyeY - size, SH110X_WHITE);
+        display.drawLine(leftEyeX, eyeY, leftEyeX + size, eyeY - size, SH110X_WHITE);
+        display.drawLine(leftEyeX - size, eyeY - size, leftEyeX + size, eyeY - size, SH110X_WHITE);
+        // Right heart
+        display.drawLine(rightEyeX, eyeY, rightEyeX - size, eyeY - size, SH110X_WHITE);
+        display.drawLine(rightEyeX, eyeY, rightEyeX + size, eyeY - size, SH110X_WHITE);
+        display.drawLine(rightEyeX - size, eyeY - size, rightEyeX + size, eyeY - size, SH110X_WHITE);
+
+        // Smiling mouth
+        int mouthY2 = 50;
+        int mouthX2 = 44;
+        for (int i = 0; i < 3; i++) {
+            display.drawLine(mouthX2, mouthY2 + i, mouthX2 + 10, mouthY2 + 6 + i, SH110X_WHITE);
+            display.drawLine(mouthX2 + 10, mouthY2 + 6 + i, mouthX2 + 30, mouthY2 + 6 + i, SH110X_WHITE);
+            display.drawLine(mouthX2 + 30, mouthY2 + 6 + i, mouthX2 + 40, mouthY2 + i, SH110X_WHITE);
+        }
+
+        display.display();
+        delay(400);
+    }
+
+    Serial.println("LOVE EMOTE SEQUENCE DONE!");
+}
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////////////
 // --- DETERMINE EMOTION BASED ON SOIL MOISTURE PERCENTAGE ---
@@ -255,6 +473,8 @@ void showEmotion(int soilMoisturePercent) {
         displayNeutralEmo(); // Implement this function for a neutral expression
         currentEmotion = NEUTRAL;
     }
+
+    SetSaveCurrentEmotion(currentEmotion); // Save the current emotion persistently
 }
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -303,7 +523,7 @@ void displayAffirmationMessage(const char* message) {
     delay(700);
 
     ////////////////////////////////////////////////////////
-    // SEQ2: Transition to happy face (closed eyes + shaded smile) ---
+    // SEQ3: Transition to happy face (closed eyes + shaded smile) ---
     display.clearDisplay();
 
     // Closed/smiling eyes (curves instead of circles)
@@ -334,7 +554,7 @@ void displayAffirmationMessage(const char* message) {
     delay(2000);
 
     ////////////////////////////////////////////////////////
-    // SEQ3: Show affirmation text ---
+    // SEQ4: Show affirmation text ---
     display.clearDisplay();
 
     displayWrappedText(message); // scroll message across the screen
@@ -347,7 +567,7 @@ void displayAffirmationMessage(const char* message) {
 // --- DISPLAY WIFI LOADING ANIMATION ---
 /////////////////////////////////////////////////////////////////////////////////////////////////////////*/
 void displayWifiLoadingAnimation(int cycles, int delayMs) {
-    const char* baseMsg = "Connecting WiFi";
+    const char* baseMsg = "Connecting to WiFi";
 
     for (int i = 1; i <= cycles; i++) {
         // Clear screen
@@ -380,10 +600,10 @@ void displayWifiConnectionStatus(bool isConnected) {
 
     const char* msg;
     if (isConnected) {
-        msg = "WiFi connected!";
+        msg = "WiFi Connected!";
         Serial.println("WiFi connected!");
     } else {
-        msg = "WiFi failed. No API.";
+        msg = "Connection Failed!";
         Serial.println("WiFi connection failed. Proceeding without API.");
     }
 
@@ -391,7 +611,7 @@ void displayWifiConnectionStatus(bool isConnected) {
     display.print(msg);
 
     display.display();
-    delay(5000);
+    delay(3000);
 }
 
 /*/////////////////////////////////////////////////////////////////////////////////////////////////////////

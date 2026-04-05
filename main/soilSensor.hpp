@@ -6,6 +6,7 @@
 #define SOIL_PIN 34  // Analog pin for soil moisture sensor (can be changed)
 #define DRY_VALUE 4095  // Analog value when soil is dry
 #define WET_VALUE 1000  // Analog value when soil is wet (adjust after testing)
+#define WATERING_THRESHOLD 6 // Minimum percentage change to consider as watering activity
 
 void initSoilSensor();
 int readSoilRaw();

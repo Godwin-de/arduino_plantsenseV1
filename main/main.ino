@@ -2,6 +2,7 @@
 #include <Wire.h>
 #include <Adafruit_GFX.h>
 #include <Adafruit_SH110X.h>
+#include <WiFiManager.h>
 // #include <RTClib.h>
 
 #include "faceDisplay.hpp"
@@ -18,7 +19,7 @@
 #define SCREEN_HEIGHT 64
 #define OLED_RESET -1
 #define SCREEN_ADDRESS 0x3C
-#define API_RETRY_LIMIT 10
+#define API_RETRY_LIMIT 8
 
 // Global display object
 Adafruit_SH1106G display(SCREEN_WIDTH, SCREEN_HEIGHT, &Wire, OLED_RESET);
@@ -38,6 +39,9 @@ void setup() {
   Serial.begin(115200);
   Wire.begin(21, 22); // SDA = 21, SCL = 22 for ESP32
 
+  // Check wakeup reason
+  esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
+
   ///////////////////////////////////////
   // Initialize display
   if (!display.begin(SCREEN_ADDRESS, true))
@@ -51,33 +55,35 @@ void setup() {
   delay(500);
 
   ///////////////////////////////////////
-  // Preparing to connect on live API for affirmation messages  
-  WiFi.begin(ssid, password);
-  while ((WiFi.status() != WL_CONNECTED) && (apiRetryCount <= API_RETRY_LIMIT)) {
-    // Connecting attempt
-    displayWifiLoadingAnimation(3, 150);  
-    apiRetryCount++;
+  // Initialize Wifi connection upon normal boot (not on wakeup from sleep)
+  if (wakeup_reason != ESP_SLEEP_WAKEUP_EXT1) {
+    initWifiConnection(); // run for 3 minutes or until successful connection
+
+    while (apiRetryCount <= API_RETRY_LIMIT) 
+    {
+      // Connecting attempt
+      displayWifiLoadingAnimation(3, 150);  
+      apiRetryCount++;
+    }
+
+    displayWifiConnectionStatus((WiFi.status() == WL_CONNECTED));
   }
- 
-  bool isConnected = (WiFi.status() == WL_CONNECTED);
-  displayWifiConnectionStatus(isConnected); // connection result display
 
   ///////////////////////////////////////
   // Detect wakeup reason
-  esp_sleep_wakeup_cause_t wakeup_reason = esp_sleep_get_wakeup_cause();
   if (wakeup_reason == ESP_SLEEP_WAKEUP_EXT1)
   {
     Serial.println("Woke up from motion!");
     // Wake up animation
     enterWakeUpState();
     resetIdleTimer();
-    
   }
   else
   {
     Serial.println("Normal power-on boot");
     // Wake up animation
     enterWakeUpState();
+
     resetIdleTimer();
   }
 
@@ -155,7 +161,8 @@ void loop() {
     String affirmationMsg = "";
     bool isConnected = (WiFi.status() == WL_CONNECTED); 
 
-    if( isConnected ) {
+    if( isConnected )
+    {
       // Try fetching quote from API
       affirmationMsg = fetchAndDisplayQuote(true);
 
@@ -164,7 +171,8 @@ void loop() {
         affirmationMsg = getAffirmationMessage();
       }
     }
-    else {
+    else
+    {
       affirmationMsg = getAffirmationMessage();
     }
   
@@ -208,7 +216,12 @@ void loop() {
     checkIdleAndSleep();
   }
 
-  // newSoilMoisturePercent = 49; //temp for testing purposes
+  // printSoilStatus(); // for debugging purposes
+
+  // displayWhistlingEmo(); // for testing purposes
+  // displayWinkingSequence(); // for testing purposes
+  // displayBreathingCalmSequence(); // for testing purposes
+  // displayLoveEmoteSequence(); // for testing purposes
 
 
 

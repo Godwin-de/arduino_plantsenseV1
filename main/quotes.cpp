@@ -5,11 +5,14 @@
 #include <Adafruit_GFX.h>
 #include <Adafruit_SSD1306.h>
 #include "quotes.hpp"
+#include <WiFiManager.h>
 
+
+// WiFi connection parameters
+const int TIMEOUT_WIFI_CONNECT = 10; // 1 minute
 
 // WiFi credentials
-const char* ssid     = "Plus Ultra (MHA)";
-const char* password = "DamnPUNK2k77";
+const char* wifiAPName = "SSID:PlantSense";
 const char* notConnectedMsg = "NO QUOTE";
 
 // Your Railway API URL
@@ -50,4 +53,27 @@ String fetchAndDisplayQuote( bool isConnected ) {
         http.end();
         return notConnectedMsg;
     }
+}
+
+/*/////////////////////////////////////////////////////////////////////////////////////////////////////////
+// --- INITIALIZE WIFI CONNECTION ---
+/////////////////////////////////////////////////////////////////////////////////////////////////////////*/
+void initWifiConnection() {
+    WiFiManager wm;
+    wm.resetSettings();
+    wm.setConfigPortalTimeout(TIMEOUT_WIFI_CONNECT);
+
+    // Display instructions on the screen
+    display.clearDisplay();
+    display.setTextSize(1);
+    display.setTextColor(SH110X_WHITE);
+    display.setCursor(0,0);
+    display.println("Configure WiFi:");
+    display.println("1. Open WiFi settings\n");
+    display.println("2. Connect to\nSSID:PlantSense\n");
+    display.println("3. Click CONFIGURE in\ncaptive portal");
+    display.display();
+   
+    // Portal call
+    wm.autoConnect(wifiAPName);
 }
